@@ -1,0 +1,9 @@
+{
+  "name": "rho",
+  "dependencies": {
+    "bootstrap-sass": "~3.3.6",
+    "jquery": "^2.1.4",
+    "magnific-popup": "^1.0.0",
+    "toastr": "^2.1.1"
+  }
+}

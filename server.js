@@ -1,18 +1,41 @@
-import path from 'path';  
-import express from 'express';  
-import webpack from 'webpack';  
-import webpackMiddleware from 'webpack-dev-middleware';  
-import webpackHotMiddleware from 'webpack-hot-middleware'; // This line  
-import config from './webpack.config.js';
+// Babel ES6/JSX Compiler
+require('babel-register');
 
-const app = express();  
-const compiler = webpack(config);
+var swig  = require('swig');
+var React = require('react');
+var ReactDOM = require('react-dom/server');
+var Router = require('react-router');
+var routes = require('./app/routes');
 
-app.use(express.static(__dirname + '/src/public'));  
-app.use(webpackMiddleware(compiler);  
-app.use(webpackHotMiddleware(compiler)); // And this line  
-app.get('*', function response(req, res) {  
-  res.sendFile(path.join(__dirname, 'src/index.html'));
+var express = require('express');
+var path = require('path');
+var logger = require('morgan');
+var bodyParser = require('body-parser');
+
+var app = express();
+
+app.set('port', process.env.PORT || 3000);
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(function(req, res) {
+  Router.match({ routes: routes.default, location: req.url }, function(err, redirectLocation, renderProps) {
+    if (err) {
+      res.status(500).send(err.message)
+    } else if (redirectLocation) {
+      res.status(302).redirect(redirectLocation.pathname + redirectLocation.search)
+    } else if (renderProps) {
+      var html = ReactDOM.renderToString(React.createElement(Router.RoutingContext, renderProps));
+      var page = swig.renderFile('views/index.html', { html: html });
+      res.status(200).send(page);
+    } else {
+      res.status(404).send('Page Not Found')
+    }
+  });
 });
 
-app.listen(3000);  
+app.listen(app.get('port'), function() {
+  console.log('Express server listening on port ' + app.get('port'));
+});
